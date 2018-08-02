@@ -1,0 +1,479 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <style>
+    div.title {
+      height: 100px;
+      font-size: 40px;
+      font-weight: bold;
+      text-align: center;
+      font-family: sans-serif;
+      line-height: 100px;
+    }
+
+    /*** CSS for demo bar that shows different levels of full nodes ***/
+    div.gradient_demo_container {
+      height: auto;
+      display: flex;
+      flex-direction: row;
+      margin-bottom: 10px;
+      margin-right: 100px;
+      margin-left: 100px;
+    }
+
+    div.gradient_demo_title,
+    div.gradient_demo_empty,
+    div.gradient_demo_low,
+    div.gradient_demo_med,
+    div.gradient_demo_high,
+    div.gradient_demo_very_high,
+    div.gradient_demo_full,
+    div.gradient_demo_null,
+    div.gradient_demo_low_no_job,
+    div.gradient_demo_med_no_job,
+    div.gradient_demo_high_no_job,
+    div.gradient_demo_very_high_no_job,
+    div.gradient_demo_full_no_job
+    {
+      text-align: center;
+      flex-grow: 1;
+      height: 40px;
+      line-height: 40px;
+      border: 1px solid #000000;
+      font-family: sans-serif;
+      color: black;
+      font-size: 20px;
+    }
+
+    div.gradient_demo_very_high,
+    div.gradient_demo_full,
+    div.gradient_demo_null
+    {
+      color: white;
+      text-shadow: none
+    }
+
+    div.display_container {
+      height: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    div.partition_container {
+      margin-bottom: 4px;
+      margin-right: 100px;
+      /*margin-left: 100px;*/
+      flex-grow: 1;
+      display: flex;
+      flex-direction: row;
+    }
+
+    div.partition_title {
+      width: 250px;
+      /*border: 1px solid #000000;*/
+      font-size: 20px;
+      text-align: center;
+      font-family: sans-serif;
+      line-height: 80px;
+    }
+
+    /*** make nodes fill area, give black border ***/
+    div.node_null_no_job,
+    div.node_empty_no_job,
+    div.node_low_no_job,
+    div.node_med_no_job,
+    div.node_high_no_job,
+    div.node_very_high_no_job,
+    div.node_full_no_job,
+    div.node_null,
+    div.node_empty,
+    div.node_low,
+    div.node_med,
+    div.node_high,
+    div.node_very_high,
+    div.node_full
+    {
+      flex-grow: 1;
+      border: 1px solid #000000;
+    }
+
+    /*** N/A node background stripes ***/
+    div.gradient_demo_null,
+    div.node_null
+    {
+      background: repeating-linear-gradient(
+        45deg,
+        #555555,
+        #666666 10px,
+        #444444 10px,
+        #333333 20px
+      );
+    }
+
+    /*** No jobs running stripes **/
+    div.gradient_demo_low_no_job,
+    div.node_low_no_job {
+      background: repeating-linear-gradient(
+        135deg,
+        white,
+        white .4em,
+        #ffff6d 0,
+        #ffff6d .75em
+      );
+    }
+
+    div.gradient_demo_med_no_job,
+    div.node_med_no_job {
+      background: repeating-linear-gradient(
+        135deg,
+        white,
+        white .4em,
+        #24ff24 0,
+        #24ff24 .75em
+      );
+    }
+
+    div.gradient_demo_high_no_job,
+    div.node_high_no_job 
+    {
+      background: repeating-linear-gradient(
+        135deg,
+        white,
+        white .4em,
+        #db9500 0,
+        #db9500 .75em
+      );
+    }
+
+    div.gradient_demo_very_high_no_job,
+    div.node_very_high_no_job 
+    {
+      background: repeating-linear-gradient(
+        135deg,
+        white,
+        white .4em,
+        #924900 0,
+        #924900 .75em
+      );
+    }
+
+    div.gradient_demo_full_no_job,
+    div.node_full_no_job 
+    {
+      background: repeating-linear-gradient(
+        135deg,
+        white,
+        white .4em,
+        #920000 0,
+        #920000 .75em
+      );
+    }
+
+    /*** node background colours by load ***/
+    /*** Colours were chosen to be visible as different shades for users with any kind of colour blindness ***/
+    div.node_empty,
+    div.gradient_demo_empty
+    {background-color: white;}/*No Colour*/
+
+    div.node_low,
+    div.gradient_demo_low
+    {background-color: #ffff6d;}/*Lowest Colour*/
+
+    div.node_med,
+    div.gradient_demo_med
+    {background-color: #24ff24;}/*2nd Colour*/
+
+    div.node_high,
+    div.gradient_demo_high
+    {background-color: #db9500;}/*3rd Colour*/
+
+    div.node_very_high,
+    div.gradient_demo_very_high
+    {background-color: #924900;}/*4th Colour*/
+
+    div.node_full,
+    div.gradient_demo_full
+    {background-color: #920000;}/*Highest Colour*/
+
+    /*** highlight node when hovered ***/
+    div.node_null_no_job:hover,
+    div.node_empty_no_job:hover,
+    div.node_low_no_job:hover,
+    div.node_med_no_job:hover,
+    div.node_high_no_job:hover,
+    div.node_very_high_no_job:hover,
+    div.node_full_no_job:hover,
+    div.node_null:hover,
+    div.node_empty:hover,
+    div.node_low:hover,
+    div.node_med:hover,
+    div.node_high:hover,
+    div.node_very_high:hover,
+    div.node_full:hover
+    {
+      border-color: white;
+    }
+
+    /*** tooltip base, default to hidden ***/
+    div.node_null_no_job .tooltip-span,
+    div.node_empty_no_job .tooltip-span,
+    div.node_low_no_job .tooltip-span,
+    div.node_med_no_job .tooltip-span,
+    div.node_high_no_job .tooltip-span,
+    div.node_very_high_no_job .tooltip-span,
+    div.node_full_no_job .tooltip-span,
+    div.node_null .tooltip-span,
+    div.node_empty .tooltip-span,
+    div.node_low .tooltip-span,
+    div.node_med .tooltip-span,
+    div.node_high .tooltip-span,
+    div.node_very_high .tooltip-span,
+    div.node_full .tooltip-span
+    {
+      display: none;
+      color: #fff;
+      background-color: #333;
+      padding: 5px;
+      font-family: sans-serif;
+      border-radius: 5px;
+    }
+
+    /*** tooltip show on hover ***/
+    div.node_null_no_job:hover .tooltip-span,
+    div.node_empty_no_job:hover .tooltip-span,
+    div.node_low_no_job:hover .tooltip-span,
+    div.node_med_no_job:hover .tooltip-span,
+    div.node_high_no_job:hover .tooltip-span,
+    div.node_very_high_no_job:hover .tooltip-span,
+    div.node_full_no_job:hover .tooltip-span,
+    div.node_null:hover .tooltip-span,
+    div.node_empty:hover .tooltip-span,
+    div.node_low:hover .tooltip-span,
+    div.node_med:hover .tooltip-span,
+    div.node_high:hover .tooltip-span,
+    div.node_very_high:hover .tooltip-span,
+    div.node_full:hover .tooltip-span
+    {
+      display: block;
+      position: fixed;
+    }
+
+    /*** tooltip bottom arrow ***/
+    div.node_null_no_job .tooltip-span:after,
+    div.node_empty_no_job .tooltip-span:after,
+    div.node_low_no_job .tooltip-span:after,
+    div.node_med_no_job .tooltip-span:after,
+    div.node_high_no_job .tooltip-span:after,
+    div.node_very_high_no_job .tooltip-span:after,
+    div.node_full_no_job .tooltip-span:after,
+    div.node_null .tooltip-span:after,
+    div.node_empty .tooltip-span:after,
+    div.node_low .tooltip-span:after,
+    div.node_med .tooltip-span:after,
+    div.node_high .tooltip-span:after,
+    div.node_very_high .tooltip-span:after,
+    div.node_full .tooltip-span:after
+    {
+      content: " ";
+      top: 100%;
+      left: 50%;
+      position: absolute;
+      margin-left: -8px;
+      border-width: 8px;
+      border-style: solid;
+      border-color: #333 transparent transparent transparent;
+    }
+
+    #timestamp {
+      font-family: sans-serif;
+      font-size: 15px;
+    }
+
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore.js"></script>
+    <script type="text/javascript">
+    //gets json data from a url
+    var getJSON = function(url, callback) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.responseType = 'json';
+      xhr.onload = function() {
+        var status = xhr.status;
+        if (status === 200) {
+          callback(null, xhr.response);
+        } else {
+          callback(status, xhr.response);
+        }
+      };
+      xhr.send();
+    };
+
+    //builds up the full cluster data, one partition at a time, and the nodes to hold the partitions
+    function cluster(data) {
+      var newCluster = document.createDocumentFragment();
+
+      _.each(data, function(part, key){
+        var newPart = buildpartition(part, key)
+        newCluster.appendChild(newPart);
+       });
+       document.getElementById("div_contain").appendChild(newCluster);
+    }
+
+    //builds the partitions data and nodes that hold it
+    function buildpartition(part, partkey) {
+      var newPart = document.createElement('div');
+        newPart.className = "partition_container";
+        // From highest priority to lowest, top to bottom
+        if (typeof part.priority !== 'undefined'){
+            newPart.style.order = -part.priority;
+        }
+        var newPartTitle = document.createElement('div');
+        newPartTitle.className = "partition_title";
+        newPartTitle.innerHTML = partkey;
+        newPart.appendChild(newPartTitle);
+
+        _.each(part.nodes, function(node, key) {
+          var newNode = buildpartitionnode(node, key, partkey);
+          newPart.appendChild(newNode);
+        });
+      return newPart;
+    }
+
+    //builds the nodes inside a partition and populates with the data
+    function buildpartitionnode(node, key, partname) {
+      var newNode = document.createElement('div');
+        if (node["active"] != true){
+          newNode.className = "node_null";
+        }
+        else {
+          var perc = 0;
+          var perc_cpu = node['total_used_cpus'] / node['total_cpus'];
+          var perc_mem = node['total_used_mem'] / node['total_memory'];
+          if (perc_mem > .95){// >95% is effectively full
+            perc_mem = 1;
+          }
+          if (perc_cpu > perc_mem){
+            perc = perc_cpu;
+          } else {
+            perc = perc_mem;
+          }
+          var num_running = node['running_jobs'];
+          var node_class = "";
+          /*** TODO: add these cutoff values to variables somewhere ***/
+          if (num_running > 0) {
+            if (perc == 1){ node_class = "node_full";}
+            else if (perc > 0.75){node_class = "node_very_high";}
+            else if (perc > 0.5){node_class = "node_high";}
+            else if (perc > 0.25){node_class = "node_med";}
+            else if (perc > 0){node_class = "node_low";}
+            else {node_class = "node_empty";}
+          }
+          else {
+            if (perc == 1){ node_class = "node_full_no_job";}
+            else if (perc > 0.75){node_class = "node_very_high_no_job";}
+            else if (perc > 0.5){node_class = "node_high_no_job";}
+            else if (perc > 0.25){node_class = "node_med_no_job";}
+            else if (perc > 0){node_class = "node_low_no_job";}
+            else {node_class = "node_empty";}
+          }
+
+          var newTip = document.createElement('span');
+          newTip.className = "tooltip-span";
+
+          var display_text = "<b>Node: " + key + " @ " + partname + "</b>";
+          display_text += "<br/>Running Jobs: " + node['running_jobs'];
+          display_text += "<br/>CPUs: " + node['cpus_allocated'] + "/" + node['total_cpus'] + " : " + (node['cpus_allocated'] / node['total_cpus'] *100 | 0) + "%";
+          display_text += "<br/>Memory: " + node['mem_allocated'] + "/" + node['total_memory'] + " MB : " + (node['mem_allocated'] / node['total_memory'] *100 | 0) + "%";
+          display_text += "<br/><b>Total Usage on Node</b>";
+          display_text += "<br/>CPUs: " + node['total_used_cpus'] + "/" + node['total_cpus'] + " : " + (node['total_used_cpus'] / node['total_cpus'] *100 | 0) + "%";
+          display_text += "<br/>Memory: " + node['total_used_mem'] + "/" + node['total_memory'] + " MB : " + (node['total_used_mem'] / node['total_memory'] *100 | 0) + "%";
+
+          newTip.innerHTML = display_text;
+          newNode.appendChild(newTip);
+
+          newNode.className = node_class;
+        }
+        return newNode;
+    }
+
+    //auto update the status
+    function timerfn() {
+      //TODO: this url should be an a variable that's easy to access
+      getJSON('http://my.slurm-rest-api.url/usage',
+        function(err, json_data) {
+          if (err !== null) {
+            alert('Something went wrong! Tell a developer: ' + err);
+          } else {
+            //Draw stuff here
+            var node = document.getElementById("div_contain");
+            while (node.hasChildNodes()) {
+              node.removeChild(node.lastChild);
+            }
+            cluster(json_data.data.partitions);
+          }
+        });
+      var div_time = document.getElementById('timestamp');
+      var d = new Date();
+      div_time.innerHTML = "&#x21bb; Last Updated: " + d.toString();
+    }
+
+    //draw the mouse over info
+    window.onmousemove = function (e) {
+      var tooltips = document.getElementsByClassName('tooltip-span');
+      var x = e.clientX,
+          y = e.clientY;
+      _.each(tooltips, function(tip) {
+        var offsetW = tip.offsetWidth;
+        var offsetH = tip.offsetHeight + 25;
+        if(offsetW != 0){
+          tip.style.left = (x - offsetW/2) + 'px';
+          tip.style.top = (y - offsetH) + 'px';
+        }
+      });
+    };
+
+    window.onload = function() {
+      timerfn();
+
+      var div_time = document.getElementById('timestamp');
+      div_time.style.cursor = 'pointer';
+      div_time.onclick = function() {
+        timerfn();
+      }
+      //TODO: 
+      //Auto refresh could be an option but the way the the tooptips get drawn does not allow it to draw cleanly.
+      //need to have tooltips draw to mouse location by default so that they dont go to the default location on interval
+      //also, this may not be a good idea because it calls a semi-expensive process on the backend each time.
+      //setInterval(timerfn, 1 * 1000);
+    }
+
+  </script>
+</head>
+
+<body>
+<div class="title">Cluster Status</div>
+<div id="div_contain" class="display_container"></div>
+<div id="timestamp">↺ Last Updated...</div>
+<div class="title">Legend</div>
+<div id="gradient_demo" class="gradient_demo_container">
+  <div class="gradient_demo_title">Node Load Status</div>
+  <div class="gradient_demo_empty">Empty</div>
+  <div class="gradient_demo_low">Low</div>
+  <div class="gradient_demo_med">Medium</div>
+  <div class="gradient_demo_high">High</div>
+  <div class="gradient_demo_very_high">Very High</div>
+  <div class="gradient_demo_full">Full</div>
+  <div class="gradient_demo_null">Not Available</div>
+</div>
+<div id="gradient_demo" class="gradient_demo_container">
+  <div class="gradient_demo_title">Node Load [with no jobs on this tier]</div>
+  <div class="gradient_demo_low_no_job"></div>
+  <div class="gradient_demo_med_no_job"></div>
+  <div class="gradient_demo_high_no_job"></div>
+  <div class="gradient_demo_very_high_no_job"></div>
+  <div class="gradient_demo_full_no_job"></div>
+</div>
+</body>
+
+</html>

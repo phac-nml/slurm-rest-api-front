@@ -1,0 +1,319 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <style>
+    html {
+      height: 100%;
+    }
+
+    body {
+      height: 100%;   
+      overflow: hidden;  /*makes the body non-scrollable (we will add scrolling to the sidebar and main content containers)*/
+      margin: 0px;  /*removes default style*/
+      display: flex;  /*enables flex content for its children*/
+      box-sizing: border-box;
+    }
+
+    .column {
+      height: 100%;  /*allows both columns to span the full height of the browser window*/
+      display: flex;
+      flex-direction: column;  /*places the left and right headers above the bottom content*/
+      overflow-x: auto;
+    }
+
+    #left {
+      flex-shrink: 1;
+      max-width: 600px;
+      min-width: 350px;
+    }
+
+    .top-left {
+      flex-shrink: 0;
+    }
+
+
+    .bottom {
+      flex-grow: 1;  /*ensures that the container will take up the full height of the parent container*/
+      overflow-y: auto;  /*adds scroll to this container*/
+      margin: 5px;
+    }
+
+    /* Content styling */
+    img {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 3px;
+      margin-bottom: 5px;
+      position: center;
+    }
+
+    p {
+      font-family: sans-serif;
+      font-size: 15px;
+    }
+
+    #header-div {
+      font-family: sans-serif;
+      font-size: 30px;
+      margin: 10px;
+    }
+
+    #moreinfo, #timestamp {
+      font-family: sans-serif;
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+
+    /* Progress bars stylings */
+    .ui-progressbar {
+      position: relative;
+      border-radius: 3px;
+      border: 2px solid black;
+    }
+
+    #loadbar {
+      background: #777;
+      height: 50px;
+      margin-bottom: 10px;
+    }
+
+    #memorybar {
+      background: #777;
+      height: 22px;
+      margin-bottom: 5px;
+    }
+
+    #cpubar {
+      background: #777;
+      height: 22px;
+      margin-bottom: 5px;
+    }
+
+    .ui-progressbar .ui-progressbar-value {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    .load-label {
+      position: absolute;
+      text-align: center;
+      width: 100%;
+      font-family: sans-serif;
+      font-size: 45px;
+      color: white;
+      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    }
+
+    .memory-label, .cpu-label {
+      position: absolute;
+      text-align: center;
+      width: 100%;
+      font-family: sans-serif;
+      font-size: 18px;
+      color: white;
+      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    }
+
+  </style>
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore.js"></script>
+  <script type="text/javascript">
+
+  $(document).ready(function() {
+    $(function() {
+      var loadbar = $("#loadbar");
+      var progressLabel = $(".load-label");
+
+      // Load bar
+      loadbar.progressbar({
+        value: false,
+        change: function() {
+          var val = loadbar.progressbar("value");
+          progressLabel.text("Load: " + val + "%");
+
+          var col = "white"
+          if (val > 80) {
+            col = "#920000"
+          } else if (val > 60) {
+            col = "#924900"
+          } else if (val > 40) {
+            col = "#db9500"
+          } else if (val > 20) {
+            col = "#24ff24"
+          } else {
+            col = "#ffff6d"
+          }
+
+          $(this).find('.ui-widget-header').css({ 'background': col });
+        }
+      });
+		
+      //memorybar
+      var memorybar = $("#memorybar");
+      var memoryLabel = $(".memory-label");
+
+      memorybar.progressbar({
+        value: false,
+        change: function() {
+          var val = memorybar.progressbar("value");
+
+          var col = "white"
+          if (val > 80) {
+            col = "#920000"
+          } else if (val > 60) {
+            col = "#924900"
+          } else if (val > 40) {
+            col = "#db9500"
+          } else if (val > 20) {
+            col = "#24ff24"
+          } else {
+            col = "#ffff6d"
+          }
+
+          $(this).find('.ui-widget-header').css({
+            'background': col
+          });
+        }
+      });
+
+      //cpubar
+      var cpubar = $("#cpubar");
+      var cpuLabel = $(".cpu-label");
+
+      cpubar.progressbar({
+        value: false,
+        change: function() {
+          var val = cpubar.progressbar("value");
+
+          var col = "white"
+          if (val > 80) {
+            col = "#920000"
+          } else if (val > 60) {
+            col = "#924900"
+          } else if (val > 40) {
+            col = "#db9500"
+          } else if (val > 20) {
+            col = "#24ff24"
+          } else {
+            col = "#ffff6d"
+          }
+
+          $(this).find('.ui-widget-header').css({
+            'background': col
+          });
+        }
+      });
+    
+      // Make the request to get the JSON data
+      var getJSON = function(url, callback) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.responseType = 'json';
+      xhr.onload = function() {
+        var status = xhr.status;
+        if (status === 200) {
+          callback(null, xhr.response);
+        } else {
+          callback(status, xhr.response);
+        }
+      };
+      xhr.send();
+    };
+
+    function timerfn() {
+      //TODO: put this url in a easy to change variable
+      getJSON('http://my.slurm-rest-api.url/nodes',
+        function(err, json_data) {
+          if (err !== null) {
+            console.log('Something went wrong! Tell a developer: ' + err);
+          } else {
+            var data = json_data.data;
+            var num_nodes = 0;
+            var cpu_used = 0;
+            var cpu_total = 0;
+            var mem_used = 0;
+            var mem_total = 0;
+            var node_per = 0;
+            _.each(data, function(node, key){
+              if(node['state'] != "DOWN*"){
+                num_nodes++;
+                cpu_used += node['alloc_cpus'];
+                cpu_total += node['cpus'];
+                mem_used += node['alloc_mem'];
+                mem_total += node['real_memory'];
+                
+                var cpu_per = node['alloc_cpus'] / node['cpus']
+                var mem_per = node['alloc_mem'] / node['real_memory']
+                var this_per = 0;
+                if (cpu_per > mem_per) {
+                  this_per = cpu_per;
+                } else {
+                  this_per = mem_per;
+                }
+                node_per += this_per;
+              }
+            });
+            node_per = node_per / num_nodes * 100;
+            var mem_per = mem_used / mem_total * 100;
+            var cpu_per = cpu_used / cpu_total * 100;
+            var alltext = "" + num_nodes +", "+node_per+", "+cpu_used+", "+cpu_total+", "+mem_used+", "+mem_total+", ";
+
+            loadbar.progressbar("value", Math.round(node_per * 100) / 100 );
+            memorybar.progressbar("value", Math.round(mem_per * 100) / 100 );
+            memoryLabel.text("Memory: " + Math.round(mem_used/1000) + "GB / " + Math.round(mem_total/1000) + "GB Used");
+            cpubar.progressbar("value", Math.round(cpu_per * 100) / 100 );
+            cpuLabel.text("CPU: " + cpu_used + " / " + cpu_total + " Used");
+
+            var div_time = document.getElementById('timestamp');
+            var d = new Date();
+            div_time.innerHTML = "&#x21bb; Last Updated: " + d.toString();
+          }
+        });
+    }
+
+    window.onload = function() {
+      var div_time = document.getElementById('timestamp');
+      div_time.style.cursor = 'pointer';
+      div_time.onclick = function() {
+        timerfn();
+      }
+
+      timerfn();
+      setInterval(timerfn, 3 * 60 * 1000);
+    }
+    });
+  });
+
+  </script>
+</head>
+
+<body>
+<div id="left" class="column">
+  <div class="top-left"><div id="header-div">Cluster Status</div></div>
+  <div class="bottom">
+  
+    <div class="load_container">
+      <img src="image.jpg">
+      <div id="loadbar">
+        <div class="load-label"></div>
+      </div>
+      <div id="memorybar">
+        <div class="memory-label"></div>
+      </div>
+      <div id="cpubar">
+        <div class="cpu-label"></div>
+      </div>
+      <div id="moreinfo">
+      <a target="_blank" class="reference" href="node_status.html">Click Here For More Detailed Cluster Node Information</a>
+      <br>
+      <a target="_blank" class="reference" href="graphs.html">Click Here For Graphs on Load History</a>
+      </div>
+      <div id="timestamp">&#x21bb; Last Updated...</div>
+      <br/>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

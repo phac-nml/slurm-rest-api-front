@@ -1,0 +1,232 @@
+<!-- I don't claim to be a front end dev, but here we are... -->
+<head>
+	<!-- Plotly.js -->
+	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+<!-- Graphs -->
+<div id="totalLoadDiv"></div>
+<div id="partitionsLoadDiv"></div>
+<div id="partitionsAltLoadDiv"></div>
+<br/><br/><div id="aa"></div>
+<br/><br/><div id="bb"></div>
+<br/><br/><div id="cc"></div>
+<!-- Date picker -->
+<form action="graphs.html">
+	<h3>Choose a specific day (or days) to view.</h3>
+	Starting Date:<br>
+	<input type="date" name="date"><br>
+	Number of Days:<br>
+	<input type="number" name="days" value="1"><br>
+	<input type="submit" value="Submit">
+</form> 
+
+<script>
+
+//stolen from stackoverflow
+//gets the url parameters passed from the date picker
+function getParameterByName(name, url) {
+	if (!url) url = window.location.href;
+	name = name.replace(/[\[\]]/g, "\\$&");
+	var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+	results = regex.exec(url);
+	if (!results) return null;
+	if (!results[2]) return '';
+	return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+var get_date = getParameterByName('date');
+var get_days = getParameterByName('days');
+let json_url = '';
+
+if(get_date == null || get_days == null || get_date == ""){//just return the last 24 hours if no entry
+	json_url = 'http://my.slurm-rest-api.url/load?time=86400';
+} else {
+	let actual_time = get_days * 86400;
+	let date_timestamp = parseInt(new Date(get_date).getTime() / 1000).toFixed(0);
+	let now = Math.round((new Date()).getTime() / 1000);
+	let time_dif = now - date_timestamp;
+	let actual_offset = time_dif - actual_time;
+	actual_offset -= 18000; //Offset 6 hours for timezone difference (GMT-06)
+	if(actual_offset < 0){actual_offset = 0;}//Don't let negitave numbers do bad things, just set offset to 0 if negative
+	json_url = 'http://my.slurm-rest-api.url/load?time='+actual_time+'&offset='+actual_offset;
+}
+
+
+//Plotly graph generation
+//see plotly docs for more info
+//a lot of the loops and stuff in here are just ways to (poorly) format the data so it works with plotly
+Plotly.d3.json(json_url, function(err, data){
+
+	data = data.data;
+
+	/************* TOTAL LOAD ****************/
+	let time1 = [];
+	let total_load = [];
+	let cpu_load = [];
+	let mem_load = [];
+	for (var i = 0; i < data.length; i++) {
+		var newDate = new Date();
+		newDate.setTime(data[i].time*1000);
+		dateString = newDate.toLocaleString();
+		time1.push(dateString)
+		//time1.push(data[i].time);
+		total_load.push(Math.round(data[i].total_load * 100 * 100) / 100);
+		cpu_load.push(Math.round(data[i].alloc_cpus / data[i].total_cpus * 100 * 100) / 100);
+		mem_load.push(Math.round(data[i].alloc_mem / data[i].total_mem * 100 * 100) / 100);
+	}
+
+	var trace_total_load = {
+		type: "scatter",
+		mode: "lines",
+		name: 'Total Load',
+		x: time1,
+		y: total_load,
+		line: {color: '#f47142'}
+	}
+
+	var trace_cpu_load = {
+		type: "scatter",
+		mode: "lines",
+		name: 'CPU Load',
+		x: time1,
+		y: cpu_load,
+		line: {color: '#41f4df'}
+	}
+
+	var trace_mem_load = {
+		type: "scatter",
+		mode: "lines",
+		name: 'Memory Load',
+		x: time1,
+		y: mem_load,
+		line: {color: '#41f449'}
+	}
+
+	var totalLoadData = [trace_total_load,trace_cpu_load,trace_mem_load];
+
+	var totalLoadLayout = {
+		title: 'Total Load',
+		yaxis: {
+			autorange: false,
+			range: [0, 100],
+			type: 'linear',
+			fixedrange: true,
+			title: 'Load Percentage',
+		},
+		xaxis: {
+			fixedrange: true,
+		},
+		height: 700,
+		margin: {
+			b: 200,
+			pad: 25,
+		},
+	};
+
+	Plotly.newPlot('totalLoadDiv', totalLoadData, totalLoadLayout, {displayModeBar: false});
+
+	/*************** PARTITION LOAD ****************/
+	partition_data = data[0].partitions;
+	let partition_list = [];
+	let partition_infos = {};
+	let time2 = [];
+	let plotPartitionLoadData = [];
+	let plotAltPartitionLoadData = [];//the way I implemented this one is REALLY BAD, should be redone probably
+
+	Object.keys(partition_data).forEach(function(key, index) {
+		partition_list.push(key);
+		partition_infos[key] = {'load':[], 'cpu_load':[], 'mem_load':[]};
+		plotPartitionLoadData.push({name: key, type: "scatter", mode: "lines"});
+		plotAltPartitionLoadData.push({name: 'mem_'+key, type: "scatter", mode: "lines"});//also part of the BAD
+		plotAltPartitionLoadData.push({name: 'cpu_'+key, type: "scatter", mode: "lines"});//this one too
+	});
+
+
+
+	for (var i = 0; i < data.length; i++) {
+		var newDate = new Date();
+		newDate.setTime(data[i].time*1000);
+		dateString = newDate.toLocaleString();
+		time2.push(dateString);
+
+		Object.keys(partition_infos).forEach(function(key, index) {
+			var p_data = data[i].partitions[key];
+			if(typeof p_data !== "undefined"){
+				partition_infos[key]['load'].push(Math.round(p_data.partition_load * 100 * 100) / 100);
+				partition_infos[key]['cpu_load'].push(Math.round(p_data.alloc_cpus / data[i].total_cpus * 100 * 100) / 100);
+				partition_infos[key]['mem_load'].push(Math.round(p_data.alloc_mem / data[i].total_mem * 100 * 100) / 100);
+		    } else {//if the partition does not exist at a timestamp, push a 0 instead
+				partition_infos[key]['load'].push(0);
+				partition_infos[key]['cpu_load'].push(0);
+				partition_infos[key]['mem_load'].push(0);
+		    }
+		});
+
+
+		total_load.push(data[i].total_load * 100);
+		cpu_load.push(data[i].alloc_cpus / data[i].total_cpus * 100);
+		mem_load.push(data[i].alloc_mem / data[i].total_mem * 100);
+	}
+
+	plotPartitionLoadData.forEach(function(item) {
+		item["x"] = time2;
+		item["y"] = partition_infos[item.name]['load'];
+	});
+
+	//WOW THIS FUNCTION IS BAD, No way in heck should this ever be the real way of doing it
+	plotAltPartitionLoadData.forEach(function(item) {
+		item["x"] = time2;
+		if(item.name.substring(0,4) == 'mem_'){
+			item["y"] = partition_infos[item.name.substring(4)]['mem_load'];
+		}
+		if(item.name.substring(0,4) == 'cpu_'){
+			item["y"] = partition_infos[item.name.substring(4)]['cpu_load'];
+		}
+	});
+
+	var partitionLoadLayout = {
+		title: 'Partition Load [Per Partition Load, % used of allocated to partition]',
+		yaxis: {
+			autorange: false,
+			range: [0, 100],
+			type: 'linear',
+			fixedrange: true,
+			title: 'Load Percentage',
+		},
+		xaxis: {
+			fixedrange: true,
+		},
+		height: 700,
+		margin: {
+			b: 200,
+			pad: 25,
+		},
+	};
+
+	var partitionAltLoadLayout = {
+		title: 'Partition CPU / MEM Load [Per Partition Load, % used of allocated to partition]',
+		yaxis: {
+			autorange: false,
+			range: [0, 100],
+			type: 'linear',
+			fixedrange: true,
+			title: 'Load Percentage',
+		},
+		xaxis: {
+			fixedrange: true,
+		},
+		height: 700,
+		margin: {
+			b: 200,
+			pad: 25,
+		},
+	};
+
+	Plotly.newPlot('partitionsLoadDiv', plotPartitionLoadData, partitionLoadLayout, {displayModeBar: false});
+	Plotly.newPlot('partitionsAltLoadDiv', plotAltPartitionLoadData, partitionAltLoadLayout, {displayModeBar: false});
+
+})
+</script>
+</body>
