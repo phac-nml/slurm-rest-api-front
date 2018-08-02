@@ -4,7 +4,7 @@ This repo has the html files for the front end of slurm-rest-api.
 
 These are only a few examples of what could be done with the api.
 
-When using these files, make sure to modify the JSON url to match the routes on your instance of slurm-rest-api. Search `waffleiron` in the files to find them quickly.
+When using these files, make sure to modify the JSON url to match the routes on your instance of slurm-rest-api. Search `slurm-rest-api` in the files to find them quickly.
 
 #### Current Load Page
 
